@@ -77,7 +77,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
         greeting: localChurchInfo.greeting,
         vision: localChurchInfo.vision,
         about_content: localChurchInfo.aboutContent,
-        pastor_image: localChurchInfo.pastorImage // 페이로드에 이미지 추가
+        pastor_image: localChurchInfo.pastorImage
       };
       
       const response = await fetch(`${DB_API_URL}?table=info`, {
@@ -86,19 +86,21 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || 'DB 저장에 실패했습니다.');
+      const data = await response.json();
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.error || data.details || '서버 저장 중 오류가 발생했습니다.');
       }
       
+      // 로컬 상태 업데이트
       setChurchInfo(localChurchInfo);
       setSermons(localSermons);
       setNews(localNews);
       
-      alert('모든 수정사항이 서버에 저장되었습니다.');
+      alert(data.message || '모든 수정사항이 서버에 저장되었습니다.');
       setHasChanges(false);
     } catch (error) {
-      console.error("저장 중 오류:", error);
+      console.error("Client Save Error:", error);
       alert('저장 실패: ' + (error as Error).message);
     } finally {
       setIsSaving(false);
@@ -251,7 +253,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                 </div>
               </section>
 
-              {/* 담임 목사님 사진 관리 섹션 - 추가됨 */}
+              {/* 담임 목사님 사진 관리 섹션 */}
               <section className="bg-slate-50 p-8 rounded-[32px] border border-slate-100">
                 <div className="flex items-center mb-6">
                    <ImageIcon size={20} className="text-primary mr-3" />
@@ -360,7 +362,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                 ))}
               </div>
 
-              {/* 관리자 설교 페이징 추가 */}
+              {/* 관리자 설교 페이징 */}
               {totalSermonPages > 1 && (
                 <div className="flex justify-center items-center space-x-3 pt-8">
                   <button 
@@ -399,7 +401,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                     </div>
                     <div className="flex space-x-1">
                       <button onClick={() => openForm('edit', n)} className="p-2 text-slate-400 hover:text-primary"><Edit2 size={18} /></button>
-                      <button onClick={() => setLocalNews(localNews.filter(item => item.id !== n.id))} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18} /></button>
+                      <button onClick={() => setLocalNews(localNews.filter(item => item.id !== n.id))} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
                     </div>
                   </div>
                 ))}

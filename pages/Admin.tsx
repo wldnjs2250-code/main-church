@@ -80,7 +80,8 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
         pastor_image: localChurchInfo.pastorImage
       };
       
-      const response = await fetch(`${DB_API_URL}?table=info`, {
+      // 사용자 요청 API 구조에 따라 'table' 대신 'sheet' 파라미터 사용
+      const response = await fetch(`${DB_API_URL}?sheet=info`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -97,7 +98,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
       setSermons(localSermons);
       setNews(localNews);
       
-      alert(data.message || '모든 수정사항이 서버에 저장되었습니다.');
+      alert('성공적으로 저장되었습니다.');
       setHasChanges(false);
     } catch (error) {
       console.error("Client Save Error:", error);

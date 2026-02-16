@@ -45,6 +45,11 @@ const App: React.FC = () => {
           setChurchInfo({
             ...INITIAL_CHURCH_INFO,
             ...raw,
+            pastorImage: raw.pastor_image || raw.pastorImage || INITIAL_CHURCH_INFO.pastorImage,
+            adminPassword: raw.password || INITIAL_CHURCH_INFO.adminPassword,
+            greeting: raw.greeting || INITIAL_CHURCH_INFO.greeting,
+            vision: raw.vision || INITIAL_CHURCH_INFO.vision,
+            aboutContent: raw.about_content || raw.aboutContent || INITIAL_CHURCH_INFO.aboutContent,
             worshipSchedule: typeof raw.worship_schedule === 'string' ? JSON.parse(raw.worship_schedule) : (Array.isArray(raw.worship_schedule) ? raw.worship_schedule : INITIAL_CHURCH_INFO.worshipSchedule)
           });
         }

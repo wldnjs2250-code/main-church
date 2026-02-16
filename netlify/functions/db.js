@@ -51,9 +51,21 @@ exports.handler = async (event) => {
     if (method === 'POST') {
       const data = JSON.parse(event.body);
       if (table === 'church_info') {
+        // pastor_image 필드를 업데이트 쿼리에 추가
         await pool.query(
-          'UPDATE church_info SET name=$1, pastor=$2, address=$3, phone=$4, password=$5, worship_schedule=$6 WHERE id=1',
-          [data.name, data.pastor, data.address, data.phone, data.password, data.worship_schedule]
+          'UPDATE church_info SET name=$1, pastor=$2, address=$3, phone=$4, password=$5, worship_schedule=$6, greeting=$7, vision=$8, about_content=$9, pastor_image=$10 WHERE id=1',
+          [
+            data.name, 
+            data.pastor, 
+            data.address, 
+            data.phone, 
+            data.password, 
+            data.worship_schedule,
+            data.greeting,
+            data.vision,
+            data.about_content,
+            data.pastor_image
+          ]
         );
       }
       return {

@@ -1,10 +1,11 @@
+
 {
   "name": "sanjeon-onnuri-church",
   "version": "1.0.0",
   "description": "Sanjeon Onnuri Church Website with Netlify Functions",
   "main": "index.tsx",
   "scripts": {
-    "build": "mkdir -p dist && cp index.html index.tsx types.ts constants.tsx metadata.json dist/ && cp -r components pages dist/ 2>/dev/null || true"
+    "build": "mkdir -p dist && cp index.html index.tsx App.tsx types.ts constants.tsx metadata.json dist/ && cp -r components pages dist/ 2>/dev/null || true"
   },
   "dependencies": {
     "react": "^19.0.0",

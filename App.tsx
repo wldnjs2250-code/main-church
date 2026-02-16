@@ -1,15 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { Page, Sermon, News, ChurchInfo } from './types';
-import { INITIAL_CHURCH_INFO, INITIAL_SERMONS, INITIAL_NEWS } from './constants';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Home from './pages/Home';
-import About from './pages/About';
-import Sermons from './pages/Sermons';
-import Community from './pages/Community';
-import Location from './pages/Location';
-import Admin from './pages/Admin';
+import { Page, Sermon, News, ChurchInfo } from './types.ts';
+import { INITIAL_CHURCH_INFO, INITIAL_SERMONS, INITIAL_NEWS } from './constants.tsx';
+import Header from './components/Header.tsx';
+import Footer from './components/Footer.tsx';
+import Home from './pages/Home.tsx';
+import About from './pages/About.tsx';
+import Sermons from './pages/Sermons.tsx';
+import Community from './pages/Community.tsx';
+import Location from './pages/Location.tsx';
+import Admin from './pages/Admin.tsx';
 
 // netlify.toml의 리다이렉트 설정을 활용한 깔끔한 API 경로
 const DB_API_URL = '/api/db';
@@ -30,7 +30,6 @@ const App: React.FC = () => {
           try {
             const res = await fetch(`${DB_API_URL}?table=${tableName}`);
             
-            // 404 발생 시 (서버리스 함수가 아직 배포 중이거나 경로가 없을 때)
             if (res.status === 404) {
               console.warn(`[API 404] ${tableName} 테이블 정보를 찾을 수 없습니다. 기본 데이터를 사용합니다.`);
               return null;
@@ -55,7 +54,6 @@ const App: React.FC = () => {
           fetchTable('news')
         ]);
 
-        // 데이터 적용 및 폴백 처리
         if (Array.isArray(infoData) && infoData.length > 0) {
           const raw = infoData[0];
           setChurchInfo({

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChurchInfo, Sermon, News, Page } from '../types';
+import { ChurchInfo, Sermon, News, Page } from '../types.ts';
 import { Play, ArrowRight, Calendar, Info, MapPin, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface HomeProps {
@@ -28,7 +28,6 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
     setCurrentSermonIndex((prev) => (prev === sliderSermons.length - 1 ? 0 : prev + 1));
   };
 
-  // 유튜브 URL에 필요한 보안 파라미터 추가
   const getSecureVideoUrl = (url: string) => {
     const separator = url.includes('?') ? '&' : '?';
     const origin = window.location.origin;
@@ -210,7 +209,6 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
         </div>
       </section>
 
-      {/* 하단 환영 섹션 */}
       <section className="py-16 md:py-24 bg-primary overflow-hidden relative rounded-[40px] md:rounded-[60px] mx-4 mb-10">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
         <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 text-center relative z-10">

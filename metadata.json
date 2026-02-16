@@ -1,0 +1,7 @@
+{
+  "name": "Copy of 산전온누리교회 2안",
+  "description": "A professional and modern church website for Sanjeon Onnuri Church, featuring a responsive design, CMS-like admin dashboard, and high-quality Korean content.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

@@ -39,9 +39,12 @@ const App: React.FC = () => {
 
         if (infoData && infoData.length > 0) {
           const rawInfo = infoData[0];
-          // worshipSchedule이 문자열로 저장되어 있을 경우를 대비해 파싱 처리
+          // 구글 시트의 컬럼명이 adminPassword 또는 password일 경우를 대비하여 처리
+          const fetchedPassword = rawInfo.adminPassword || rawInfo.password || INITIAL_CHURCH_INFO.adminPassword;
+          
           setChurchInfo({
             ...rawInfo,
+            adminPassword: fetchedPassword, // 시트에서 가져온 비밀번호 적용
             worshipSchedule: typeof rawInfo.worshipSchedule === 'string' 
               ? JSON.parse(rawInfo.worshipSchedule) 
               : (rawInfo.worshipSchedule || INITIAL_CHURCH_INFO.worshipSchedule)

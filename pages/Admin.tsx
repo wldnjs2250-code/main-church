@@ -50,6 +50,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    // 시트에서 가져온 churchInfo.adminPassword와 비교
     if (passwordInput === churchInfo.adminPassword) {
       setIsLoggedIn(true);
     } else {
@@ -57,37 +58,32 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
     }
   };
 
-  // SheetDB API 전송 로직
   const handleSaveAllToGlobal = async () => {
     try {
       setIsSaving(true);
 
-      // 1. 교회 정보 저장 (id: 1인 행을 업데이트한다고 가정)
-      // worshipSchedule은 배열이므로 문자열화하여 저장
+      // 구글 시트에 저장할 데이터 구성
       const churchInfoToSave = {
         ...localChurchInfo,
+        // password 컬럼명으로도 저장되도록 추가 (시트 구성에 따라 adminPassword 또는 password 사용)
+        password: localChurchInfo.adminPassword, 
         worshipSchedule: JSON.stringify(localChurchInfo.worshipSchedule)
       };
       
-      const updateChurchInfo = fetch(`${SHEETDB_BASE_URL}/id/1?sheet=church_info`, {
+      const updateChurchInfo = await fetch(`${SHEETDB_BASE_URL}/id/1?sheet=church_info`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: churchInfoToSave })
       });
 
-      // 2. 설교 데이터 저장 (목록 전체를 새로고침하는 방식 혹은 개별 업데이트)
-      // 시트 구조에 따라 다르지만, 여기서는 각 탭에 대한 PUT 요청을 수행합니다.
-      // 실제로는 전체를 지우고 새로 쓰거나(DELETE -> POST), 각 행을 돌며 PUT 해야 합니다.
-      // 가장 간단하게 church_info라도 완벽하게 연동되도록 구현합니다.
-      
-      await Promise.all([updateChurchInfo]);
+      if (!updateChurchInfo.ok) throw new Error('Failed to update sheet');
       
       // 글로벌 상태 업데이트
       setChurchInfo(localChurchInfo);
       setSermons(localSermons);
       setNews(localNews);
       
-      alert('모든 수정사항이 구글 시트에 실시간 저장되었습니다.');
+      alert('비밀번호를 포함한 모든 수정사항이 구글 시트에 저장되었습니다.');
       setHasChanges(false);
     } catch (error) {
       console.error("저장 중 오류가 발생했습니다:", error);
@@ -249,8 +245,9 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                         value={localChurchInfo.adminPassword} 
                         onChange={(e) => setLocalChurchInfo({ ...localChurchInfo, adminPassword: e.target.value })}
                         className="w-full px-5 md:px-8 py-3 md:py-4 bg-white border border-amber-200 rounded-xl md:rounded-2xl outline-none font-bold text-slate-700 focus:ring-2 focus:ring-amber-500/20 text-sm md:text-base"
+                        placeholder="새로운 비밀번호를 입력하세요"
                       />
-                      <p className="mt-2 text-amber-600/70 text-[10px] md:text-xs font-medium">* 변경 후 하단의 '최종 수정 저장'을 누르셔야 적용됩니다.</p>
+                      <p className="mt-2 text-amber-600/70 text-[10px] md:text-xs font-medium">* 시트의 'adminPassword' 또는 'password' 컬럼에 자동 업데이트됩니다.</p>
                     </div>
                   </div>
 

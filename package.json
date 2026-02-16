@@ -1,17 +1,18 @@
 
 {
   "name": "sanjeon-onnuri-church",
-  "version": "1.0.0",
-  "description": "Sanjeon Onnuri Church Website with Netlify Functions",
-  "main": "index.tsx",
+  "version": "1.0.1",
+  "description": "Sanjeon Onnuri Church Website - Standard Build",
+  "main": "index.js",
   "scripts": {
-    "build": "mkdir -p dist && cp index.html index.tsx App.tsx types.ts constants.tsx metadata.json dist/ && cp -r components pages dist/ 2>/dev/null || true"
+    "build": "npx esbuild index.tsx --bundle --outfile=dist/index.js --format=esm --jsx=automatic --external:react --external:react-dom --external:lucide-react --minify && cp index.html metadata.json dist/"
   },
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "lucide-react": "^0.460.0",
-    "pg": "^8.11.0"
+    "pg": "^8.11.0",
+    "esbuild": "^0.24.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

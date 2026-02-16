@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
+import App from './App';
 
 const container = document.getElementById('root');
 if (container) {
@@ -11,6 +11,4 @@ if (container) {
       <App />
     </React.StrictMode>
   );
-} else {
-  console.error("Root element not found. Make sure index.html has <div id='root'></div>");
 }

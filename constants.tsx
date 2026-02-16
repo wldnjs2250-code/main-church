@@ -31,24 +31,6 @@ export const INITIAL_SERMONS: Sermon[] = [
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     scripture: '요한복음 14:27',
     thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg'
-  },
-  {
-    id: '2',
-    title: '믿음으로 승리하는 삶',
-    speaker: '김온누리 목사',
-    date: '2024-05-12',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    scripture: '히브리서 11:1-3',
-    thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg'
-  },
-  {
-    id: '3',
-    title: '사랑으로 역사하는 믿음',
-    speaker: '김온누리 목사',
-    date: '2024-05-05',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    scripture: '갈라디아서 5:6',
-    thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg'
   }
 ];
 

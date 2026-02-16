@@ -11,8 +11,8 @@ import Community from './pages/Community';
 import Location from './pages/Location';
 import Admin from './pages/Admin';
 
-// Netlify Functions 호출을 위한 API 경로 (netlify.toml의 리다이렉트 활용)
-const DB_API_URL = '/.netlify/functions/db';
+// netlify.toml의 리다이렉트 설정을 활용한 깔끔한 API 경로
+const DB_API_URL = '/api/db';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Home);
@@ -27,24 +27,24 @@ const App: React.FC = () => {
         setIsLoading(true);
         
         const fetchTable = async (tableName: string) => {
-          // 404 에러 발생 시 빠르게 catch로 넘기기 위해 timeout이나 에러 핸들링 강화
           try {
             const res = await fetch(`${DB_API_URL}?table=${tableName}`);
             
+            // 404 발생 시 (서버리스 함수가 아직 배포 중이거나 경로가 없을 때)
             if (res.status === 404) {
-              console.warn(`API Endpoint not found (404) for [${tableName}]. Using local constants.`);
-              return null; // 404인 경우 null 반환하여 초기값 유지 유도
+              console.warn(`[API 404] ${tableName} 테이블 정보를 찾을 수 없습니다. 기본 데이터를 사용합니다.`);
+              return null;
             }
 
             if (!res.ok) {
               const errorText = await res.text();
-              console.error(`Fetch Error [${tableName}]: Status ${res.status}`, errorText);
+              console.error(`[Fetch Error] ${tableName}: ${res.status}`, errorText);
               return null;
             }
             
             return await res.json();
           } catch (e) {
-            console.error(`Network or Parsing Error [${tableName}]:`, e);
+            console.error(`[Network Error] ${tableName}:`, e);
             return null;
           }
         };
@@ -55,7 +55,7 @@ const App: React.FC = () => {
           fetchTable('news')
         ]);
 
-        // 1. 교회 정보 처리
+        // 데이터 적용 및 폴백 처리
         if (Array.isArray(infoData) && infoData.length > 0) {
           const raw = infoData[0];
           setChurchInfo({
@@ -70,30 +70,18 @@ const App: React.FC = () => {
               return Array.isArray(schedule) ? schedule : INITIAL_CHURCH_INFO.worshipSchedule;
             })()
           });
-        } else {
-          setChurchInfo(INITIAL_CHURCH_INFO);
         }
 
-        // 2. 설교 데이터 처리
         if (Array.isArray(sermonsData) && sermonsData.length > 0) {
           setSermons(sermonsData);
-        } else {
-          setSermons(INITIAL_SERMONS);
         }
 
-        // 3. 소식 데이터 처리
         if (Array.isArray(newsData) && newsData.length > 0) {
           setNews(newsData);
-        } else {
-          setNews(INITIAL_NEWS);
         }
 
       } catch (error) {
-        console.error("데이터 로딩 중 예상치 못한 오류:", error);
-        // 오류 발생 시 전체 초기화
-        setChurchInfo(INITIAL_CHURCH_INFO);
-        setSermons(INITIAL_SERMONS);
-        setNews(INITIAL_NEWS);
+        console.error("데이터 초기 로딩 중 오류 발생:", error);
       } finally {
         setIsLoading(false);
       }

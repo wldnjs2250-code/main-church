@@ -12,8 +12,8 @@ interface AdminProps {
   setNews: (news: News[]) => void;
 }
 
-// Netlify 서버리스 함수 경로
-const DB_API_URL = '/.netlify/functions/db';
+// netlify.toml의 리다이렉트 설정을 활용한 깔끔한 API 경로
+const DB_API_URL = '/api/db';
 
 const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSermons, news, setNews }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'sermons' | 'news'>('info');

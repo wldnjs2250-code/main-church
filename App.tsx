@@ -11,7 +11,8 @@ import Community from './pages/Community';
 import Location from './pages/Location';
 import Admin from './pages/Admin';
 
-const SHEETDB_BASE_URL = 'https://sheetdb.io/api/v1/9llt4ltqhe7fo';
+// Netlify Functions 호출을 위한 API 경로 (netlify.toml의 리다이렉트 활용)
+const DB_API_URL = '/.netlify/functions/db';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Home);
@@ -20,46 +21,79 @@ const App: React.FC = () => {
   const [news, setNews] = useState<News[]>(INITIAL_NEWS);
   const [isLoading, setIsLoading] = useState(true);
 
-  // SheetDB 데이터 페칭 로직
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         
-        // 3개의 탭에서 동시에 데이터 로드
-        const [infoRes, sermonsRes, newsRes] = await Promise.all([
-          fetch(`${SHEETDB_BASE_URL}?sheet=church_info`),
-          fetch(`${SHEETDB_BASE_URL}?sheet=sermons`),
-          fetch(`${SHEETDB_BASE_URL}?sheet=news`)
+        const fetchTable = async (tableName: string) => {
+          // 404 에러 발생 시 빠르게 catch로 넘기기 위해 timeout이나 에러 핸들링 강화
+          try {
+            const res = await fetch(`${DB_API_URL}?table=${tableName}`);
+            
+            if (res.status === 404) {
+              console.warn(`API Endpoint not found (404) for [${tableName}]. Using local constants.`);
+              return null; // 404인 경우 null 반환하여 초기값 유지 유도
+            }
+
+            if (!res.ok) {
+              const errorText = await res.text();
+              console.error(`Fetch Error [${tableName}]: Status ${res.status}`, errorText);
+              return null;
+            }
+            
+            return await res.json();
+          } catch (e) {
+            console.error(`Network or Parsing Error [${tableName}]:`, e);
+            return null;
+          }
+        };
+
+        const [infoData, sermonsData, newsData] = await Promise.all([
+          fetchTable('info'),
+          fetchTable('sermons'),
+          fetchTable('news')
         ]);
 
-        const infoData = await infoRes.json();
-        const sermonsData = await sermonsRes.json();
-        const newsData = await newsRes.json();
-
-        if (infoData && infoData.length > 0) {
-          const rawInfo = infoData[0];
-          // 구글 시트의 컬럼명이 adminPassword 또는 password일 경우를 대비하여 처리
-          const fetchedPassword = rawInfo.adminPassword || rawInfo.password || INITIAL_CHURCH_INFO.adminPassword;
-          
+        // 1. 교회 정보 처리
+        if (Array.isArray(infoData) && infoData.length > 0) {
+          const raw = infoData[0];
           setChurchInfo({
-            ...rawInfo,
-            adminPassword: fetchedPassword, // 시트에서 가져온 비밀번호 적용
-            worshipSchedule: typeof rawInfo.worshipSchedule === 'string' 
-              ? JSON.parse(rawInfo.worshipSchedule) 
-              : (rawInfo.worshipSchedule || INITIAL_CHURCH_INFO.worshipSchedule)
+            ...INITIAL_CHURCH_INFO,
+            ...raw,
+            adminPassword: raw.password || raw.adminPassword || INITIAL_CHURCH_INFO.adminPassword,
+            worshipSchedule: (() => {
+              const schedule = raw.worship_schedule || raw.worshipSchedule;
+              if (typeof schedule === 'string') {
+                try { return JSON.parse(schedule); } catch (e) { return INITIAL_CHURCH_INFO.worshipSchedule; }
+              }
+              return Array.isArray(schedule) ? schedule : INITIAL_CHURCH_INFO.worshipSchedule;
+            })()
           });
+        } else {
+          setChurchInfo(INITIAL_CHURCH_INFO);
         }
 
-        if (sermonsData && Array.isArray(sermonsData)) {
+        // 2. 설교 데이터 처리
+        if (Array.isArray(sermonsData) && sermonsData.length > 0) {
           setSermons(sermonsData);
+        } else {
+          setSermons(INITIAL_SERMONS);
         }
 
-        if (newsData && Array.isArray(newsData)) {
+        // 3. 소식 데이터 처리
+        if (Array.isArray(newsData) && newsData.length > 0) {
           setNews(newsData);
+        } else {
+          setNews(INITIAL_NEWS);
         }
+
       } catch (error) {
-        console.error("데이터를 가져오는 중 오류가 발생했습니다:", error);
+        console.error("데이터 로딩 중 예상치 못한 오류:", error);
+        // 오류 발생 시 전체 초기화
+        setChurchInfo(INITIAL_CHURCH_INFO);
+        setSermons(INITIAL_SERMONS);
+        setNews(INITIAL_NEWS);
       } finally {
         setIsLoading(false);
       }
@@ -68,7 +102,6 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
-  // Sync with Hash for simple routing support
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '') as Page;
@@ -79,10 +112,8 @@ const App: React.FC = () => {
       }
       window.scrollTo(0, 0);
     };
-
     window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Initial check
-
+    handleHashChange();
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
@@ -97,13 +128,7 @@ const App: React.FC = () => {
 
     switch (currentPage) {
       case Page.Home:
-        return <Home 
-          churchInfo={churchInfo} 
-          latestSermon={sermons[0]} 
-          allSermons={sermons}
-          recentNews={news.slice(0, 3)} 
-          onNavigate={setCurrentPage} 
-        />;
+        return <Home churchInfo={churchInfo} latestSermon={sermons[0]} allSermons={sermons} recentNews={news.slice(0, 3)} onNavigate={setCurrentPage} />;
       case Page.About:
         return <About churchInfo={churchInfo} />;
       case Page.Sermons:
@@ -113,24 +138,9 @@ const App: React.FC = () => {
       case Page.Location:
         return <Location churchInfo={churchInfo} />;
       case Page.Admin:
-        return (
-          <Admin 
-            churchInfo={churchInfo} 
-            setChurchInfo={setChurchInfo} 
-            sermons={sermons} 
-            setSermons={setSermons} 
-            news={news} 
-            setNews={setNews} 
-          />
-        );
+        return <Admin churchInfo={churchInfo} setChurchInfo={setChurchInfo} sermons={sermons} setSermons={setSermons} news={news} setNews={setNews} />;
       default:
-        return <Home 
-          churchInfo={churchInfo} 
-          latestSermon={sermons[0]} 
-          allSermons={sermons}
-          recentNews={news.slice(0, 3)} 
-          onNavigate={setCurrentPage} 
-        />;
+        return <Home churchInfo={churchInfo} latestSermon={sermons[0]} allSermons={sermons} recentNews={news.slice(0, 3)} onNavigate={setCurrentPage} />;
     }
   };
 

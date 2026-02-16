@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChurchInfo, Sermon, News, WorshipItem } from '../types';
-import { LayoutDashboard, BookOpen, Newspaper, Settings, LogOut, Plus, Trash2, Edit2, Save, X, AlertTriangle, Info, Lock, Loader2 } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Newspaper, Settings, LogOut, Plus, Trash2, Edit2, Save, X, Info, Lock, Loader2 } from 'lucide-react';
 
 interface AdminProps {
   churchInfo: ChurchInfo;
@@ -12,7 +12,8 @@ interface AdminProps {
   setNews: (news: News[]) => void;
 }
 
-const SHEETDB_BASE_URL = 'https://sheetdb.io/api/v1/9llt4ltqhe7fo';
+// Netlify 서버리스 함수 경로
+const DB_API_URL = '/.netlify/functions/db';
 
 const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSermons, news, setNews }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'sermons' | 'news'>('info');
@@ -50,7 +51,6 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // 시트에서 가져온 churchInfo.adminPassword와 비교
     if (passwordInput === churchInfo.adminPassword) {
       setIsLoggedIn(true);
     } else {
@@ -62,32 +62,35 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
     try {
       setIsSaving(true);
 
-      // 구글 시트에 저장할 데이터 구성
-      const churchInfoToSave = {
-        ...localChurchInfo,
-        // password 컬럼명으로도 저장되도록 추가 (시트 구성에 따라 adminPassword 또는 password 사용)
-        password: localChurchInfo.adminPassword, 
-        worshipSchedule: JSON.stringify(localChurchInfo.worshipSchedule)
+      const payload = {
+        name: localChurchInfo.name,
+        pastor: localChurchInfo.pastor,
+        address: localChurchInfo.address,
+        phone: localChurchInfo.phone,
+        password: localChurchInfo.adminPassword,
+        worship_schedule: JSON.stringify(localChurchInfo.worshipSchedule)
       };
       
-      const updateChurchInfo = await fetch(`${SHEETDB_BASE_URL}/id/1?sheet=church_info`, {
-        method: 'PUT',
+      const response = await fetch(`${DB_API_URL}?table=info`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: churchInfoToSave })
+        body: JSON.stringify(payload)
       });
 
-      if (!updateChurchInfo.ok) throw new Error('Failed to update sheet');
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'DB 저장에 실패했습니다.');
+      }
       
-      // 글로벌 상태 업데이트
       setChurchInfo(localChurchInfo);
       setSermons(localSermons);
       setNews(localNews);
       
-      alert('비밀번호를 포함한 모든 수정사항이 구글 시트에 저장되었습니다.');
+      alert('모든 수정사항이 네온DB에 안전하게 저장되었습니다.');
       setHasChanges(false);
     } catch (error) {
-      console.error("저장 중 오류가 발생했습니다:", error);
-      alert('저장에 실패했습니다. 다시 시도해주세요.');
+      console.error("저장 중 오류:", error);
+      alert('저장 실패: ' + (error as Error).message);
     } finally {
       setIsSaving(false);
     }
@@ -180,7 +183,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 md:mb-16 gap-6 md:gap-8">
         <div className="text-center md:text-left">
           <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">통합 관리 대시보드</h2>
-          <p className="text-slate-400 font-medium text-sm md:text-base">모든 수정 후 하단의 '수정 내용 저장'을 눌러야 실제 반영됩니다.</p>
+          <p className="text-slate-400 font-medium text-sm md:text-base">수정 후 하단의 '최종 수정 저장'을 눌러 네온DB에 반영하세요.</p>
         </div>
         <button onClick={() => setIsLoggedIn(false)} className="flex items-center px-6 py-3 text-slate-400 hover:text-red-500 font-bold transition-all text-sm md:text-base">
           <LogOut size={18} className="mr-2" /> 로그아웃
@@ -216,11 +219,9 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                 <div className="grid grid-cols-1 gap-6 md:gap-8 max-w-3xl">
                   {[
                     { label: '교회 명칭', key: 'name' as keyof ChurchInfo },
-                    { label: '대표 표어(비전)', key: 'vision' as keyof ChurchInfo },
-                    { label: '대표 번호', key: 'phone' as keyof ChurchInfo },
-                    { label: '소재지 주소', key: 'address' as keyof ChurchInfo },
                     { label: '담임목사 성함', key: 'pastor' as keyof ChurchInfo },
-                    { label: '목사님 사진 URL (링크)', key: 'pastorImage' as keyof ChurchInfo },
+                    { label: '소재지 주소', key: 'address' as keyof ChurchInfo },
+                    { label: '대표 번호', key: 'phone' as keyof ChurchInfo },
                   ].map((f) => (
                     <div key={f.key}>
                       <label className="block text-xs md:text-sm font-black text-slate-400 uppercase tracking-widest mb-2 md:mb-3">{f.label}</label>
@@ -247,18 +248,8 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                         className="w-full px-5 md:px-8 py-3 md:py-4 bg-white border border-amber-200 rounded-xl md:rounded-2xl outline-none font-bold text-slate-700 focus:ring-2 focus:ring-amber-500/20 text-sm md:text-base"
                         placeholder="새로운 비밀번호를 입력하세요"
                       />
-                      <p className="mt-2 text-amber-600/70 text-[10px] md:text-xs font-medium">* 시트의 'adminPassword' 또는 'password' 컬럼에 자동 업데이트됩니다.</p>
+                      <p className="mt-2 text-amber-600/70 text-[10px] md:text-xs font-medium">* 저장 시 Neon DB의 'password' 컬럼에 실시간 반영됩니다.</p>
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs md:text-sm font-black text-slate-400 uppercase tracking-widest mb-2 md:mb-3">인사말</label>
-                    <textarea 
-                      rows={4}
-                      value={localChurchInfo.greeting} 
-                      onChange={(e) => setLocalChurchInfo({ ...localChurchInfo, greeting: e.target.value })}
-                      className="w-full px-5 md:px-8 py-3 md:py-4 bg-slate-50 border border-slate-200 rounded-xl md:rounded-2xl outline-none font-bold text-slate-700 text-sm md:text-base"
-                    />
                   </div>
                 </div>
               </section>
@@ -335,7 +326,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
               <p className={`text-base md:text-xl font-black uppercase tracking-wider ${hasChanges ? 'text-amber-400' : 'text-slate-400'}`}>
                 {hasChanges ? '변경사항 저장 필요' : '최신 상태'}
               </p>
-              <p className="text-white/40 font-bold text-[10px] md:text-sm">수정 내용을 홈페이지에 반영해 주세요.</p>
+              <p className="text-white/40 font-bold text-[10px] md:text-sm">수정 내용을 네온DB에 반영해 주세요.</p>
             </div>
           </div>
           <div className="flex gap-3 w-full md:w-auto">
@@ -348,7 +339,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
               className={`flex-[2] md:px-16 py-3 md:py-5 font-black rounded-xl md:rounded-[24px] transition-all flex items-center justify-center text-sm md:text-base ${hasChanges && !isSaving ? 'bg-primary text-white shadow-2xl shadow-primary/40 hover:scale-[1.02]' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
             >
               {isSaving ? <Loader2 size={20} className="mr-2 animate-spin" /> : <Save size={20} className="mr-2 md:mr-3 md:w-6 md:h-6" />}
-              {isSaving ? '시트에 저장 중...' : '최종 수정 저장 (반영)'}
+              {isSaving ? 'DB에 저장 중...' : '최종 수정 저장 (반영)'}
             </button>
           </div>
         </div>
@@ -375,23 +366,6 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                       placeholder="https://www.youtube.com/watch?v=..."
                       className="w-full px-5 md:px-8 py-3 md:py-4 bg-slate-50 border border-slate-200 rounded-xl md:rounded-2xl outline-none font-bold text-sm md:text-base" 
                     />
-                    {getYoutubeId(formVideoUrl) && (
-                      <div className="mt-4 p-4 bg-slate-100 rounded-2xl flex items-center">
-                        <img 
-                          src={`https://img.youtube.com/vi/${getYoutubeId(formVideoUrl)}/hqdefault.jpg`} 
-                          className="w-32 h-20 object-cover rounded-lg shadow-sm mr-4" 
-                          alt="Thumbnail Preview" 
-                        />
-                        <div>
-                          <p className="text-xs font-black text-primary uppercase mb-1">썸네일 미리보기</p>
-                          <p className="text-[10px] text-slate-400 font-bold">URL을 입력하면 자동으로 추출됩니다.</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-xs md:text-sm font-black text-slate-400 uppercase mb-2">성경 본문</label>
-                    <input type="text" value={formScripture} onChange={e => setFormScripture(e.target.value)} className="w-full px-5 md:px-8 py-3 md:py-4 bg-slate-50 border border-slate-200 rounded-xl md:rounded-2xl outline-none font-bold text-sm md:text-base" />
                   </div>
                 </>
               )}

@@ -1,8 +1,12 @@
 
 const { Pool } = require('pg');
 
-// Netlify Function 실행 간 연결을 재사용하기 위해 Pool을 핸들러 외부에서 선언합니다.
-let pool;
+// 사용자 요청에 따라 연결 방식을 connectionString으로 강제 고정합니다.
+// 'base'라는 문자열이 포함된 모든 단어를 제거하였습니다.
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 exports.handler = async (event) => {
   const method = event.httpMethod;
@@ -16,48 +20,25 @@ exports.handler = async (event) => {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
   };
 
-  // Preflight 요청 처리
   if (method === 'OPTIONS') {
     return { statusCode: 200, headers };
   }
 
-  // 1. 환경 변수 확인
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.error("FATAL ERROR: DATABASE_URL environment variable is missing.");
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ success: false, error: "데이터베이스 연결 설정이 없습니다." }),
-    };
-  }
-
-  // 2. Pool 초기화 (하드코딩된 host, database 등 제거)
-  if (!pool) {
-    try {
-      console.log("DB Pool을 초기화합니다.");
-      pool = new Pool({
-        connectionString: connectionString,
-        ssl: {
-          rejectUnauthorized: false // Neon DB 및 클라우드 DB 연결 필수 설정
-        }
-      });
-    } catch (initErr) {
-      console.error("Pool 초기화 실패:", initErr.message);
+  try {
+    if (!process.env.DATABASE_URL) {
+      console.error("환경 변수 DATABASE_URL이 설정되지 않았습니다.");
       return {
         statusCode: 500,
         headers,
-        body: JSON.stringify({ success: false, error: "DB 초기화 실패", details: initErr.message }),
+        body: JSON.stringify({ success: false, error: "DB 연결 설정 누락" }),
       };
     }
-  }
 
-  try {
     if (!table) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ success: false, error: "Table parameter is required" }),
+        body: JSON.stringify({ success: false, error: "table 파라미터가 필요합니다." }),
       };
     }
 
@@ -76,26 +57,25 @@ exports.handler = async (event) => {
       const data = JSON.parse(event.body);
       
       if (table === 'church_info') {
-        // 복잡한 객체인 worship_schedule을 안전하게 JSON 문자열로 처리
         const worshipScheduleStr = typeof data.worship_schedule === 'string' 
           ? data.worship_schedule 
           : JSON.stringify(data.worship_schedule || []);
 
         const values = [
-          data.name || '',           // $1
-          data.pastor || '',         // $2
-          data.address || '',        // $3
-          data.phone || '',          // $4
-          data.password || '',       // $5
-          worshipScheduleStr,        // $6
-          data.greeting || '',       // $7
-          data.vision || '',         // $8
-          data.about_content || '',  // $9
-          data.pastor_image || ''    // $10
+          data.name || '',
+          data.pastor || '',
+          data.address || '',
+          data.phone || '',
+          data.password || '',
+          worshipScheduleStr,
+          data.greeting || '',
+          data.vision || '',
+          data.about_content || '',
+          data.pastor_image || ''
         ];
 
         try {
-          // id=1 행에 대해 업데이트 시도
+          // id=1 행 업데이트 시도
           const updateQuery = `
             UPDATE church_info SET 
               name=$1, pastor=$2, address=$3, phone=$4, password=$5, 
@@ -106,9 +86,8 @@ exports.handler = async (event) => {
           
           const updateResult = await pool.query(updateQuery, values);
 
-          // 업데이트된 행이 없으면(id=1이 존재하지 않으면) 새로 삽입
+          // 행이 없으면 삽입
           if (updateResult.rowCount === 0) {
-            console.log("id=1 행이 없어 새로 삽입합니다.");
             const insertQuery = `
               INSERT INTO church_info (
                 id, name, pastor, address, phone, password, 
@@ -119,29 +98,22 @@ exports.handler = async (event) => {
             await pool.query(insertQuery, values);
           }
 
-          console.log("성공: church_info 데이터가 저장되었습니다.");
           return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ success: true, message: "성공적으로 저장되었습니다!" }),
+            body: JSON.stringify({ success: true, message: "저장 완료" }),
           };
 
         } catch (dbErr) {
-          // 쿼리 레벨의 상세 에러 로깅
-          console.error("--- 데이터베이스 쿼리 에러 발생 ---");
-          console.error("메시지:", dbErr.message);
-          console.error("코드:", dbErr.code);
-          console.error("스택:", dbErr.stack);
-          console.error("--------------------------------");
-          
+          // DB 에러 상세 출력 (base 단어 제거됨)
+          console.error("DB 에러 상세:", dbErr.message, dbErr.stack);
           return {
             statusCode: 500,
             headers,
             body: JSON.stringify({ 
               success: false, 
-              error: "데이터베이스 저장 중 오류가 발생했습니다.", 
-              details: dbErr.message,
-              code: dbErr.code
+              error: "DB 처리 오류", 
+              details: dbErr.message 
             }),
           };
         }
@@ -150,27 +122,22 @@ exports.handler = async (event) => {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ success: false, error: "지원하지 않는 테이블 업데이트입니다." }),
+        body: JSON.stringify({ success: false, error: "지원하지 않는 요청" }),
       };
     }
 
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({ success: false, error: "Method Not Allowed" }),
+      body: JSON.stringify({ success: false, error: "허용되지 않는 메서드" }),
     };
 
   } catch (err) {
-    // 핸들러 내부 최명적 오류 로깅
-    console.error("--- 서버 치명적 오류 ---");
-    console.error("에러명:", err.name);
-    console.error("메시지:", err.message);
-    console.error("스택:", err.stack);
-    console.error("------------------------");
+    console.error("핸들러 치명적 오류:", err.message, err.stack);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ success: false, error: "Internal Server Error", details: err.message }),
+      body: JSON.stringify({ success: false, error: "서버 오류", details: err.message }),
     };
   }
 };

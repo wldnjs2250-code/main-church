@@ -26,7 +26,6 @@ const App: React.FC = () => {
         setIsLoading(true);
         const fetchTable = async (tableName: string) => {
           try {
-            // 사용자 요청 API 구조에 따라 'table' 대신 'sheet' 파라미터 사용
             const res = await fetch(`${DB_API_URL}?sheet=${tableName}`);
             if (!res.ok) return null;
             return await res.json();
@@ -41,34 +40,25 @@ const App: React.FC = () => {
           fetchTable('news')
         ]);
 
-        // 새로운 API는 info 호출 시 배열이 아닌 단일 객체를 반환함
         if (infoData && typeof infoData === 'object' && !Array.isArray(infoData)) {
           const raw = infoData as any;
-          if (raw.id || raw.name) { // 유효한 데이터인지 확인
+          if (raw.id || raw.name) {
             setChurchInfo({
               ...INITIAL_CHURCH_INFO,
               ...raw,
+              greetingTitle: raw.greeting_title || raw.greetingTitle || INITIAL_CHURCH_INFO.greetingTitle,
+              visionTitle: raw.vision_title || raw.visionTitle || INITIAL_CHURCH_INFO.visionTitle,
               pastorImage: raw.pastor_image || raw.pastorImage || INITIAL_CHURCH_INFO.pastorImage,
               adminPassword: raw.password || INITIAL_CHURCH_INFO.adminPassword,
               greeting: raw.greeting || INITIAL_CHURCH_INFO.greeting,
               vision: raw.vision || INITIAL_CHURCH_INFO.vision,
               aboutContent: raw.about_content || raw.aboutContent || INITIAL_CHURCH_INFO.aboutContent,
+              youtubeUrl: raw.youtube_url || raw.youtubeUrl || INITIAL_CHURCH_INFO.youtubeUrl,
+              instagramUrl: raw.instagram_url || raw.instagramUrl || INITIAL_CHURCH_INFO.instagramUrl,
+              kakaoUrl: raw.kakao_url || raw.kakaoUrl || INITIAL_CHURCH_INFO.kakaoUrl,
               worshipSchedule: typeof raw.worship_schedule === 'string' ? JSON.parse(raw.worship_schedule) : (Array.isArray(raw.worship_schedule) ? raw.worship_schedule : INITIAL_CHURCH_INFO.worshipSchedule)
             });
           }
-        } else if (Array.isArray(infoData) && infoData.length > 0) {
-          // 기존 배열 방식 호환성 유지
-          const raw = infoData[0];
-          setChurchInfo({
-            ...INITIAL_CHURCH_INFO,
-            ...raw,
-            pastorImage: raw.pastor_image || raw.pastorImage || INITIAL_CHURCH_INFO.pastorImage,
-            adminPassword: raw.password || INITIAL_CHURCH_INFO.adminPassword,
-            greeting: raw.greeting || INITIAL_CHURCH_INFO.greeting,
-            vision: raw.vision || INITIAL_CHURCH_INFO.vision,
-            aboutContent: raw.about_content || raw.aboutContent || INITIAL_CHURCH_INFO.aboutContent,
-            worshipSchedule: typeof raw.worship_schedule === 'string' ? JSON.parse(raw.worship_schedule) : (Array.isArray(raw.worship_schedule) ? raw.worship_schedule : INITIAL_CHURCH_INFO.worshipSchedule)
-          });
         }
         
         if (Array.isArray(sermonsData)) setSermons(sermonsData.length > 0 ? sermonsData : INITIAL_SERMONS);

@@ -6,7 +6,9 @@ export const INITIAL_CHURCH_INFO: ChurchInfo = {
   pastor: '김온누리 담임목사',
   pastorImage: 'https://picsum.photos/seed/pastor/400/400',
   adminPassword: '0000',
+  greetingTitle: '담임목사 인사말',
   greeting: '하나님의 사랑이 가득한 산전온누리교회에 오신 것을 진심으로 환영합니다.',
+  visionTitle: '우리의 비전',
   vision: '하나님을 기쁘시게, 세상을 아름답게 하는 제자 공동체',
   address: '울산광역시 중구 산전길 103 (동동 162-4)',
   phone: '052-297-0691',
@@ -15,9 +17,9 @@ export const INITIAL_CHURCH_INFO: ChurchInfo = {
   youtubeUrl: 'https://youtube.com',
   worshipSchedule: [
     { title: '주일 1부 예배', time: '오전 11:00' },
-    { title: '주일 2부 예배', time: '오후 1:30' },
-    { title: '수요 기도회', time: '오후 8:00' },
-    { title: '금요 기도회', time: '오후 8:00' },
+    { title: '주일 2부 예배', time: '오후 01:30' },
+    { title: '수요 기도회', time: '오후 08:00' },
+    { title: '금요 기도회', time: '오후 08:00' },
   ],
   aboutContent: '산전온누리교회는 하나님의 영광이 가득하며, 모든 성도가 주님의 제자로 성장하는 공동체입니다. 우리는 성경의 권위를 인정하며 복음의 능력을 믿습니다.',
 };

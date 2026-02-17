@@ -28,7 +28,9 @@ export interface ChurchInfo {
   pastor: string;
   pastorImage: string;
   adminPassword: string;
+  greetingTitle: string; // 추가: "담임목사 인사말" 등 제목 수정용
   greeting: string;
+  visionTitle: string;    // 추가: "우리의 비전" 등 제목 수정용
   vision: string;
   address: string;
   phone: string;

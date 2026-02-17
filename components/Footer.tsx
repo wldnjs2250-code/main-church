@@ -24,7 +24,7 @@ const Footer: React.FC<FooterProps> = ({ churchInfo }) => {
               <a href={churchInfo.instagramUrl} target="_blank" rel="noreferrer" className="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-pink-600 hover:border-pink-600 transition-all">
                 <Instagram size={20} />
               </a>
-              <a href={churchInfo.kakaoUrl} target="_blank" rel="noreferrer" className="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-yellow-600 hover:border-yellow-600 transition-all">
+              <a href={churchInfo.kakaoUrl} target="_blank" rel="noreferrer" className="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:yellow-600 hover:border-yellow-600 transition-all">
                 <MessageCircle size={20} />
               </a>
             </div>
@@ -48,9 +48,12 @@ const Footer: React.FC<FooterProps> = ({ churchInfo }) => {
             <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6 text-center md:text-left">예배 안내</h4>
             <ul className="space-y-2 text-sm text-slate-600">
               {churchInfo.worshipSchedule.map((item, idx) => (
-                <li key={idx} className="flex justify-between border-b border-slate-100 pb-2">
-                  <span>{item.title}</span>
-                  <span className="font-bold">{item.time}</span>
+                <li key={idx} className="flex items-center border-b border-slate-100 pb-2">
+                  <span className="flex-grow text-left">{item.title}</span>
+                  {/* 정렬 최적화: 고정 너비와 tabular-nums를 사용하여 '오전/오후' 라인을 맞춤 */}
+                  <span className="font-bold w-24 text-left pl-2 whitespace-nowrap">
+                    {item.time}
+                  </span>
                 </li>
               ))}
             </ul>

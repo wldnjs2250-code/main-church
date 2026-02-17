@@ -1,14 +1,12 @@
 
 const { Pool } = require('pg');
 
-// SSL 경고 해결 및 보안 연결을 위해 sslmode=verify-full 옵션이 포함된 URL 처리 로직
-// Neon DB 등 클라우드 DB에서 발생하는 SSL 관련 메시지를 깔끔하게 정리합니다.
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.DATABASE_URL + (process.env.DATABASE_URL.includes('?') ? '&' : '?') + 'sslmode=verify-full';
 
 const pool = new Pool({
   connectionString: connectionString,
   ssl: {
-    rejectUnauthorized: false // 대부분의 서버리스 환경에서 호환성을 위해 유지하되, 내부 경고는 억제됨
+    rejectUnauthorized: false
   }
 });
 
@@ -46,19 +44,26 @@ exports.handler = async (event, context) => {
       
       if (sheet === 'info') {
         const query = `
-          INSERT INTO church_info (id, name, pastor, address, phone, password, worship_schedule, greeting, vision, about_content, pastor_image)
-          VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          INSERT INTO church_info (
+            id, name, pastor, address, phone, password, worship_schedule, 
+            greeting, vision, about_content, pastor_image, greeting_title, 
+            vision_title, youtube_url, instagram_url, kakao_url
+          )
+          VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
           ON CONFLICT (id) DO UPDATE SET
-          name=$1, pastor=$2, address=$3, phone=$4, password=$5, worship_schedule=$6, greeting=$7, vision=$8, about_content=$9, pastor_image=$10
+          name=$1, pastor=$2, address=$3, phone=$4, password=$5, worship_schedule=$6, 
+          greeting=$7, vision=$8, about_content=$9, pastor_image=$10, greeting_title=$11, 
+          vision_title=$12, youtube_url=$13, instagram_url=$14, kakao_url=$15
         `;
         const values = [
           data.name, data.pastor, data.address, data.phone, data.password,
           typeof data.worship_schedule === 'string' ? data.worship_schedule : JSON.stringify(data.worship_schedule),
-          data.greeting, data.vision, data.about_content, data.pastor_image
+          data.greeting, data.vision, data.about_content, data.pastor_image,
+          data.greeting_title, data.vision_title,
+          data.youtube_url, data.instagram_url, data.kakao_url
         ];
         await pool.query(query, values);
       } else if (sheet === 'sermons') {
-        // 기존 데이터 삭제 후 일괄 삽입 (동기화 방식)
         await pool.query('DELETE FROM sermons');
         for (const s of data) {
           const query = `

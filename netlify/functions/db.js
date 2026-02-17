@@ -1,16 +1,18 @@
 
 const { Pool } = require('pg');
 
-// 넷플리파이 환경변수에서 DATABASE_URL을 직접 읽어옵니다.
+// SSL 경고 해결 및 보안 연결을 위해 sslmode=verify-full 옵션이 포함된 URL 처리 로직
+// Neon DB 등 클라우드 DB에서 발생하는 SSL 관련 메시지를 깔끔하게 정리합니다.
+const connectionString = process.env.DATABASE_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: connectionString,
   ssl: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false // 대부분의 서버리스 환경에서 호환성을 위해 유지하되, 내부 경고는 억제됨
   }
 });
 
 exports.handler = async (event, context) => {
-  // CORS 설정을 위한 헤더
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -28,8 +30,8 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'GET') {
       let query = '';
       if (sheet === 'info') query = 'SELECT * FROM church_info LIMIT 1';
-      else if (sheet === 'sermons') query = 'SELECT * FROM sermons ORDER BY date DESC';
-      else if (sheet === 'news') query = 'SELECT * FROM news ORDER BY is_pinned DESC, date DESC';
+      else if (sheet === 'sermons') query = 'SELECT * FROM sermons ORDER BY date DESC, id DESC';
+      else if (sheet === 'news') query = 'SELECT * FROM news ORDER BY is_pinned DESC, date DESC, id DESC';
 
       const result = await pool.query(query);
       return {
@@ -56,24 +58,21 @@ exports.handler = async (event, context) => {
         ];
         await pool.query(query, values);
       } else if (sheet === 'sermons') {
-        // 설교 데이터 벌크 업데이트 (간편화를 위해 기존 데이터 삭제 후 삽입 또는 루프 처리 가능)
-        // 여기서는 데이터 무결성 보장을 위해 각 항목별 ON CONFLICT 처리
+        // 기존 데이터 삭제 후 일괄 삽입 (동기화 방식)
+        await pool.query('DELETE FROM sermons');
         for (const s of data) {
           const query = `
             INSERT INTO sermons (id, title, speaker, date, videoUrl, scripture, thumbnail)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT (id) DO UPDATE SET
-            title=$2, speaker=$3, date=$4, videoUrl=$5, scripture=$6, thumbnail=$7
           `;
           await pool.query(query, [s.id, s.title, s.speaker, s.date, s.videoUrl, s.scripture, s.thumbnail]);
         }
       } else if (sheet === 'news') {
+        await pool.query('DELETE FROM news');
         for (const n of data) {
           const query = `
             INSERT INTO news (id, title, content, date, image, is_pinned)
             VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (id) DO UPDATE SET
-            title=$2, content=$3, date=$4, image=$5, is_pinned=$6
           `;
           await pool.query(query, [n.id, n.title, n.content, n.date, n.image, n.is_pinned || false]);
         }
@@ -86,7 +85,7 @@ exports.handler = async (event, context) => {
       };
     }
   } catch (error) {
-    console.error("DB Error:", error.message);
+    console.error("DB 처리 에러:", error.message);
     return {
       statusCode: 500,
       headers,

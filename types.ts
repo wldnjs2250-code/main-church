@@ -15,6 +15,7 @@ export interface News {
   content: string;
   date: string;
   image?: string;
+  is_pinned?: boolean; // 상단 고정 여부
 }
 
 export interface WorshipItem {

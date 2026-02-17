@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChurchInfo, Sermon, News, WorshipItem } from '../types';
-import { LayoutDashboard, BookOpen, Newspaper, Settings, LogOut, Plus, Trash2, Edit2, Save, X, Info, Lock, Loader2, FileText, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Newspaper, Settings, LogOut, Plus, Trash2, Edit2, Save, X, Info, Lock, Loader2, FileText, ChevronLeft, ChevronRight, Image as ImageIcon, Pin } from 'lucide-react';
 
 interface AdminProps {
   churchInfo: ChurchInfo;
@@ -28,11 +28,10 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
 
-  // 설교 목록 페이징 상태
   const [sermonPage, setSermonPage] = useState(1);
+  const [newsPage, setNewsPage] = useState(1);
   const itemsPerPage = 10;
 
-  // 설교/소식 폼 상태
   const [formTitle, setFormTitle] = useState('');
   const [formSpeaker, setFormSpeaker] = useState('');
   const [formScripture, setFormScripture] = useState('');
@@ -40,6 +39,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
   const [formImage, setFormImage] = useState('');
   const [formDate, setFormDate] = useState('');
   const [formVideoUrl, setFormVideoUrl] = useState('');
+  const [formIsPinned, setFormIsPinned] = useState(false);
 
   const getYoutubeId = (url: string) => {
     const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -67,7 +67,8 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
     try {
       setIsSaving(true);
 
-      const payload = {
+      // 1. 교회 정보 저장
+      const infoPayload = {
         name: localChurchInfo.name,
         pastor: localChurchInfo.pastor,
         address: localChurchInfo.address,
@@ -80,28 +81,34 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
         pastor_image: localChurchInfo.pastorImage
       };
       
-      // 사용자 요청 API 구조에 따라 'table' 대신 'sheet' 파라미터 사용
-      const response = await fetch(`${DB_API_URL}?sheet=info`, {
+      await fetch(`${DB_API_URL}?sheet=info`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(infoPayload)
       });
 
-      const data = await response.json();
+      // 2. 설교 데이터 전체 저장 (현재 테이블 전체 업데이트 방식 가정)
+      await fetch(`${DB_API_URL}?sheet=sermons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(localSermons)
+      });
 
-      if (!response.ok || data.success === false) {
-        throw new Error(data.error || data.details || '서버 저장 중 오류가 발생했습니다.');
-      }
+      // 3. 소식 데이터 전체 저장
+      await fetch(`${DB_API_URL}?sheet=news`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(localNews)
+      });
       
-      // 로컬 상태 업데이트
       setChurchInfo(localChurchInfo);
       setSermons(localSermons);
       setNews(localNews);
       
-      alert('성공적으로 저장되었습니다.');
+      alert('모든 변경사항이 안전하게 저장되었습니다.');
       setHasChanges(false);
     } catch (error) {
-      console.error("Client Save Error:", error);
+      console.error("Save Error:", error);
       alert('저장 실패: ' + (error as Error).message);
     } finally {
       setIsSaving(false);
@@ -118,6 +125,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
       setFormImage(item.image || '');
       setFormDate(item.date || '');
       setFormVideoUrl(item.videoUrl || '');
+      setFormIsPinned(item.is_pinned || false);
     } else {
       setEditingItem(null);
       setFormTitle('');
@@ -127,6 +135,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
       setFormImage('');
       setFormDate(new Date().toISOString().split('T')[0]);
       setFormVideoUrl('');
+      setFormIsPinned(false);
     }
     setIsAdding(true);
   };
@@ -155,7 +164,8 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
         title: formTitle,
         content: formContent,
         date: formDate,
-        image: formImage
+        image: formImage,
+        is_pinned: formIsPinned
       };
       if (editingItem) setLocalNews(localNews.map(n => n.id === editingItem.id ? data : n));
       else setLocalNews([data, ...localNews]);
@@ -163,21 +173,21 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
     setIsAdding(false);
   };
 
-  const updateWorshipLocal = (idx: number, key: keyof WorshipItem, val: string) => {
-    const schedule = [...localChurchInfo.worshipSchedule];
-    schedule[idx] = { ...schedule[idx], [key]: val };
-    setLocalChurchInfo({ ...localChurchInfo, worshipSchedule: schedule });
+  const togglePinLocal = (newsItem: News) => {
+    setLocalNews(localNews.map(n => n.id === newsItem.id ? { ...n, is_pinned: !n.is_pinned } : n));
   };
 
-  // 설교 페이징 데이터 계산
   const totalSermonPages = Math.ceil(localSermons.length / itemsPerPage);
   const paginatedSermons = localSermons.slice((sermonPage - 1) * itemsPerPage, sermonPage * itemsPerPage);
+
+  const totalNewsPages = Math.ceil(localNews.length / itemsPerPage);
+  const paginatedNews = localNews.slice((newsPage - 1) * itemsPerPage, newsPage * itemsPerPage);
 
   if (!isLoggedIn) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center bg-slate-50 px-4">
-        <form onSubmit={handleLogin} className="bg-white p-8 md:p-16 rounded-[32px] md:rounded-[48px] shadow-2xl w-full max-w-lg border border-slate-100 text-center">
-          <div className="w-16 h-16 bg-primary/10 text-primary rounded-[24px] flex items-center justify-center mx-auto mb-8 shadow-inner">
+        <form onSubmit={handleLogin} className="bg-white p-8 md:p-16 rounded-[32px] md:rounded-[48px] shadow-2xl w-full max-w-lg border border-slate-100 text-center text-slate-900">
+          <div className="w-16 h-16 bg-primary/10 text-primary rounded-[24px] flex items-center justify-center mx-auto mb-8">
             <LayoutDashboard size={32} />
           </div>
           <h2 className="text-2xl md:text-3xl font-black mb-4">관리자 접속</h2>
@@ -196,7 +206,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-in fade-in duration-500 pb-48">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-in fade-in duration-500 pb-48 text-slate-900">
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div>
           <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">통합 관리 대시보드</h2>
@@ -225,10 +235,8 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
         </aside>
 
         <div className="flex-grow bg-white p-8 md:p-12 rounded-[40px] border border-slate-100 shadow-sm min-h-[600px]">
-          
           {activeTab === 'info' && (
             <div className="space-y-12 animate-in fade-in">
-              {/* 기본 정보 */}
               <section>
                 <div className="flex items-center mb-8 border-b border-slate-50 pb-4">
                    <Info size={20} className="text-primary mr-3" />
@@ -254,7 +262,6 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                 </div>
               </section>
 
-              {/* 담임 목사님 사진 관리 섹션 */}
               <section className="bg-slate-50 p-8 rounded-[32px] border border-slate-100">
                 <div className="flex items-center mb-6">
                    <ImageIcon size={20} className="text-primary mr-3" />
@@ -265,64 +272,14 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                     <img src={localChurchInfo.pastorImage} alt="Pastor Preview" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-grow w-full">
-                    <label className="block text-xs font-black text-slate-400 uppercase mb-2">사진 이미지 URL (직접 입력)</label>
+                    <label className="block text-xs font-black text-slate-400 uppercase mb-2">사진 이미지 URL</label>
                     <input 
                       type="text" 
                       value={localChurchInfo.pastorImage} 
                       onChange={(e) => setLocalChurchInfo({ ...localChurchInfo, pastorImage: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 mb-2"
-                    />
-                    <p className="text-[10px] text-slate-400 font-medium">* 외부 이미지 링크 또는 서버에 업로드된 URL을 입력해 주세요.</p>
-                  </div>
-                </div>
-              </section>
-
-              <section>
-                <div className="flex items-center mb-8 border-b border-slate-50 pb-4">
-                   <FileText size={20} className="text-primary mr-3" />
-                   <h3 className="text-2xl font-black">교회 소개 상세 편집</h3>
-                </div>
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase mb-2">담임목사 인사말 요약 (Greeting)</label>
-                    <textarea 
-                      rows={3}
-                      value={localChurchInfo.greeting} 
-                      onChange={(e) => setLocalChurchInfo({ ...localChurchInfo, greeting: e.target.value })}
-                      className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 leading-relaxed"
+                      className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase mb-2">교회 비전 (Vision Statement)</label>
-                    <input 
-                      type="text"
-                      value={localChurchInfo.vision} 
-                      onChange={(e) => setLocalChurchInfo({ ...localChurchInfo, vision: e.target.value })}
-                      className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase mb-2">교회 상세 역사 및 소개 (About Content)</label>
-                    <textarea 
-                      rows={6}
-                      value={localChurchInfo.aboutContent} 
-                      onChange={(e) => setLocalChurchInfo({ ...localChurchInfo, aboutContent: e.target.value })}
-                      className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 leading-relaxed"
-                    />
-                  </div>
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-2xl font-black mb-8 border-b border-slate-50 pb-4">예배 일정 관리</h3>
-                <div className="space-y-4">
-                  {localChurchInfo.worshipSchedule.map((w, i) => (
-                    <div key={i} className="flex gap-4">
-                      <input type="text" value={w.title} onChange={(e) => updateWorshipLocal(i, 'title', e.target.value)} className="flex-grow px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" placeholder="예배명" />
-                      <input type="text" value={w.time} onChange={(e) => updateWorshipLocal(i, 'time', e.target.value)} className="w-48 px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" placeholder="시간" />
-                    </div>
-                  ))}
                 </div>
               </section>
 
@@ -345,7 +302,7 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
             <div className="space-y-8 animate-in fade-in">
               <div className="flex justify-between items-center">
                 <h3 className="text-2xl font-black">설교 목록 ({localSermons.length})</h3>
-                <button onClick={() => openForm('add')} className="px-6 py-3 bg-primary text-white font-black rounded-xl flex items-center shadow-lg transition-all hover:scale-105"><Plus size={18} className="mr-2" /> 설교 추가</button>
+                <button onClick={() => openForm('add')} className="px-6 py-3 bg-primary text-white font-black rounded-xl flex items-center shadow-lg hover:scale-105 transition-all"><Plus size={18} className="mr-2" /> 설교 추가</button>
               </div>
               <div className="space-y-4">
                 {paginatedSermons.map(s => (
@@ -353,34 +310,20 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                     <img src={s.thumbnail} className="w-24 h-16 object-cover rounded-lg mr-6 shadow-sm" alt="" />
                     <div className="flex-grow">
                       <h4 className="text-lg font-black text-slate-900 mb-1">{s.title}</h4>
-                      <p className="text-slate-400 font-bold text-sm">{s.date} • {s.speaker} • {s.scripture}</p>
+                      <p className="text-slate-400 font-bold text-sm">{s.date} • {s.speaker}</p>
                     </div>
                     <div className="flex space-x-1">
-                      <button onClick={() => openForm('edit', s)} className="p-2 text-slate-400 hover:text-primary transition-colors"><Edit2 size={18} /></button>
-                      <button onClick={() => setLocalSermons(localSermons.filter(item => item.id !== s.id))} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+                      <button onClick={() => openForm('edit', s)} className="p-2 text-slate-400 hover:text-primary"><Edit2 size={18} /></button>
+                      <button onClick={() => setLocalSermons(localSermons.filter(item => item.id !== s.id))} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18} /></button>
                     </div>
                   </div>
                 ))}
               </div>
-
-              {/* 관리자 설교 페이징 */}
               {totalSermonPages > 1 && (
                 <div className="flex justify-center items-center space-x-3 pt-8">
-                  <button 
-                    disabled={sermonPage === 1}
-                    onClick={() => setSermonPage(p => p - 1)}
-                    className="p-2 rounded-lg bg-slate-100 disabled:opacity-30"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
+                  <button disabled={sermonPage === 1} onClick={() => setSermonPage(p => p - 1)} className="p-2 rounded-lg bg-slate-100 disabled:opacity-30"><ChevronLeft size={20} /></button>
                   <span className="font-black text-slate-600">{sermonPage} / {totalSermonPages}</span>
-                  <button 
-                    disabled={sermonPage === totalSermonPages}
-                    onClick={() => setSermonPage(p => p + 1)}
-                    className="p-2 rounded-lg bg-slate-100 disabled:opacity-30"
-                  >
-                    <ChevronRight size={20} />
-                  </button>
+                  <button disabled={sermonPage === totalSermonPages} onClick={() => setSermonPage(p => p + 1)} className="p-2 rounded-lg bg-slate-100 disabled:opacity-30"><ChevronRight size={20} /></button>
                 </div>
               )}
             </div>
@@ -389,54 +332,59 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
           {activeTab === 'news' && (
             <div className="space-y-8 animate-in fade-in">
                <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-black">교회 소식</h3>
-                <button onClick={() => openForm('add')} className="px-6 py-3 bg-primary text-white font-black rounded-xl flex items-center shadow-lg transition-all hover:scale-105"><Plus size={18} className="mr-2" /> 소식 추가</button>
+                <h3 className="text-2xl font-black">교회 소식 ({localNews.length})</h3>
+                <button onClick={() => openForm('add')} className="px-6 py-3 bg-primary text-white font-black rounded-xl flex items-center shadow-lg hover:scale-105 transition-all"><Plus size={18} className="mr-2" /> 소식 추가</button>
               </div>
               <div className="space-y-4">
-                {localNews.map(n => (
-                  <div key={n.id} className="flex items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                {paginatedNews.map(n => (
+                  <div key={n.id} className={`flex items-center p-4 rounded-2xl border ${n.is_pinned ? 'border-primary/30 bg-primary/5' : 'bg-slate-50 border-slate-100'} hover:shadow-md transition-all`}>
                     {n.image && <img src={n.image} className="w-16 h-16 object-cover rounded-lg mr-6" alt="" />}
                     <div className="flex-grow">
-                      <h4 className="text-lg font-black text-slate-900 mb-1">{n.title}</h4>
+                      <div className="flex items-center">
+                        {n.is_pinned && <Pin size={14} className="text-primary mr-2" fill="currentColor" />}
+                        <h4 className="text-lg font-black text-slate-900">{n.title}</h4>
+                      </div>
                       <p className="text-slate-400 font-bold text-sm">{n.date}</p>
                     </div>
                     <div className="flex space-x-1">
+                      <button onClick={() => togglePinLocal(n)} className={`p-2 transition-colors ${n.is_pinned ? 'text-primary' : 'text-slate-300 hover:text-primary'}`} title="상단 고정"><Pin size={18} /></button>
                       <button onClick={() => openForm('edit', n)} className="p-2 text-slate-400 hover:text-primary"><Edit2 size={18} /></button>
-                      <button onClick={() => setLocalNews(localNews.filter(item => item.id !== n.id))} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+                      <button onClick={() => setLocalNews(localNews.filter(item => item.id !== n.id))} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18} /></button>
                     </div>
                   </div>
                 ))}
               </div>
+              {totalNewsPages > 1 && (
+                <div className="flex justify-center items-center space-x-3 pt-8">
+                  <button disabled={newsPage === 1} onClick={() => setNewsPage(p => p - 1)} className="p-2 rounded-lg bg-slate-100 disabled:opacity-30"><ChevronLeft size={20} /></button>
+                  <span className="font-black text-slate-600">{newsPage} / {totalNewsPages}</span>
+                  <button disabled={newsPage === totalNewsPages} onClick={() => setNewsPage(p => p + 1)} className="p-2 rounded-lg bg-slate-100 disabled:opacity-30"><ChevronRight size={20} /></button>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* 저장 바 */}
       <div className={`fixed bottom-0 left-0 right-0 p-6 z-[100] transition-all duration-500 ${hasChanges ? 'bg-slate-900 translate-y-0' : 'bg-slate-800 translate-y-2 opacity-0 pointer-events-none'}`}>
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="text-white">
-            <p className="text-xl font-black text-amber-400">변경사항 저장 필요</p>
-            <p className="text-white/40 text-sm font-medium">수정된 내용을 서버에 반영하려면 저장 버튼을 누르세요.</p>
+            <p className="text-xl font-black text-amber-400">변경사항 저장 대기 중</p>
+            <p className="text-white/40 text-sm font-medium">수정된 내용을 네온 DB에 최종 반영하려면 저장 버튼을 누르세요.</p>
           </div>
           <div className="flex gap-4">
             <button onClick={() => { setLocalChurchInfo(churchInfo); setLocalSermons(sermons); setLocalNews(news); setHasChanges(false); }} className="px-8 py-4 bg-white/5 text-white/50 font-black rounded-2xl hover:bg-white/10">취소</button>
-            <button 
-              onClick={handleSaveAllToGlobal} 
-              disabled={isSaving}
-              className="px-12 py-4 bg-primary text-white font-black rounded-2xl shadow-2xl transition-all hover:scale-[1.02] flex items-center"
-            >
+            <button onClick={handleSaveAllToGlobal} disabled={isSaving} className="px-12 py-4 bg-primary text-white font-black rounded-2xl shadow-2xl flex items-center hover:scale-[1.02] transition-all">
               {isSaving ? <Loader2 size={20} className="mr-2 animate-spin" /> : <Save size={20} className="mr-2" />}
-              서버에 최종 저장
+              DB에 최종 저장
             </button>
           </div>
         </div>
       </div>
 
-      {/* 추가/수정 모달 */}
-      {isAdding && (activeTab === 'sermons' || activeTab === 'news') && (
+      {isAdding && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[110] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[40px] p-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in zoom-in duration-300">
+          <div className="bg-white rounded-[40px] p-8 md:p-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative text-slate-900 animate-in zoom-in duration-300">
             <button onClick={() => setIsAdding(false)} className="absolute top-8 right-8 text-slate-300 hover:text-slate-900"><X size={28} /></button>
             <h3 className="text-2xl font-black mb-8">{editingItem ? '항목 수정' : '새 항목 추가'}</h3>
             <div className="space-y-6 mb-10">
@@ -449,23 +397,29 @@ const Admin: React.FC<AdminProps> = ({ churchInfo, setChurchInfo, sermons, setSe
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-black text-slate-400 uppercase mb-2">강사명 (이름)</label>
+                      <label className="block text-xs font-black text-slate-400 uppercase mb-2">강사명</label>
                       <input type="text" value={formSpeaker} onChange={e => setFormSpeaker(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" />
                     </div>
                     <div>
                       <label className="block text-xs font-black text-slate-400 uppercase mb-2">성경 본문</label>
-                      <input type="text" value={formScripture} onChange={e => setFormScripture(e.target.value)} placeholder="예: 요한복음 3:16" className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" />
+                      <input type="text" value={formScripture} onChange={e => setFormScripture(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-black text-slate-400 uppercase mb-2">유튜브 URL</label>
-                    <input type="text" value={formVideoUrl} onChange={e => setFormVideoUrl(e.target.value)} placeholder="https://youtube.com/..." className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" />
+                    <input type="text" value={formVideoUrl} onChange={e => setFormVideoUrl(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" />
                   </div>
                 </>
               )}
 
               {activeTab === 'news' && (
                 <>
+                  <div className="flex items-center space-x-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <input type="checkbox" checked={formIsPinned} onChange={e => setFormIsPinned(e.target.checked)} className="w-5 h-5 accent-primary" id="pin-chk" />
+                    <label htmlFor="pin-chk" className="font-bold text-slate-700 cursor-pointer flex items-center">
+                      <Pin size={16} className="mr-2 text-primary" /> 이 소식을 상단에 고정합니다
+                    </label>
+                  </div>
                   <div>
                     <label className="block text-xs font-black text-slate-400 uppercase mb-2">이미지 URL</label>
                     <input type="text" value={formImage} onChange={e => setFormImage(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" />

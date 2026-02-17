@@ -21,7 +21,6 @@ exports.handler = async (event, context) => {
     return { statusCode: 200, headers, body: '' };
   }
 
-  // queryStringParameters가 null일 경우를 대비해 안전하게 접근합니다.
   const params = event.queryStringParameters || {};
   const sheet = params.sheet || 'info';
 
@@ -30,7 +29,7 @@ exports.handler = async (event, context) => {
       let query = '';
       if (sheet === 'info') query = 'SELECT * FROM church_info LIMIT 1';
       else if (sheet === 'sermons') query = 'SELECT * FROM sermons ORDER BY date DESC';
-      else if (sheet === 'news') query = 'SELECT * FROM news ORDER BY date DESC';
+      else if (sheet === 'news') query = 'SELECT * FROM news ORDER BY is_pinned DESC, date DESC';
 
       const result = await pool.query(query);
       return {
@@ -56,6 +55,28 @@ exports.handler = async (event, context) => {
           data.greeting, data.vision, data.about_content, data.pastor_image
         ];
         await pool.query(query, values);
+      } else if (sheet === 'sermons') {
+        // 설교 데이터 벌크 업데이트 (간편화를 위해 기존 데이터 삭제 후 삽입 또는 루프 처리 가능)
+        // 여기서는 데이터 무결성 보장을 위해 각 항목별 ON CONFLICT 처리
+        for (const s of data) {
+          const query = `
+            INSERT INTO sermons (id, title, speaker, date, videoUrl, scripture, thumbnail)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT (id) DO UPDATE SET
+            title=$2, speaker=$3, date=$4, videoUrl=$5, scripture=$6, thumbnail=$7
+          `;
+          await pool.query(query, [s.id, s.title, s.speaker, s.date, s.videoUrl, s.scripture, s.thumbnail]);
+        }
+      } else if (sheet === 'news') {
+        for (const n of data) {
+          const query = `
+            INSERT INTO news (id, title, content, date, image, is_pinned)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (id) DO UPDATE SET
+            title=$2, content=$3, date=$4, image=$5, is_pinned=$6
+          `;
+          await pool.query(query, [n.id, n.title, n.content, n.date, n.image, n.is_pinned || false]);
+        }
       }
       
       return {
@@ -65,7 +86,7 @@ exports.handler = async (event, context) => {
       };
     }
   } catch (error) {
-    console.error("실제 발생한 DB 에러:", error.message);
+    console.error("DB Error:", error.message);
     return {
       statusCode: 500,
       headers,

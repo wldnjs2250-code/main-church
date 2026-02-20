@@ -5,6 +5,7 @@
   "description": "Sanjeon Onnuri Church Website - Standard Build",
   "main": "index.js",
   "scripts": {
+    "dev": "next dev",
     "build": "npx esbuild index.tsx --bundle --outfile=dist/index.js --format=esm --jsx=automatic --external:react --external:react-dom --external:lucide-react --minify && cp index.html metadata.json dist/"
   },
   "dependencies": {

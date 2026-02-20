@@ -50,8 +50,8 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-[#0F172A]/80"></div>
         <div className="relative z-10 text-center px-6 max-w-5xl">
-          <h1 className="text-3xl md:text-8xl font-black text-white leading-tight mb-4 md:mb-6 tracking-[0.1em] md:tracking-[0.2em] drop-shadow-2xl">{churchInfo.name}</h1>
-          <p className="text-sm md:text-2xl text-white/60 font-light tracking-[0.1em] md:tracking-[0.2em] uppercase leading-relaxed">{churchInfo.vision}</p>
+          <h1 className="text-[32px] md:text-[80px] font-black text-white leading-tight mb-4 md:mb-6 tracking-[0.1em] md:tracking-[0.2em] drop-shadow-2xl">{churchInfo.name}</h1>
+          <p className="text-[14px] md:text-[24px] text-white/60 font-light tracking-[0.1em] md:tracking-[0.2em] uppercase leading-relaxed">{churchInfo.vision}</p>
         </div>
       </section>
 
@@ -62,7 +62,7 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
             <div onClick={() => onNavigate(Page.About)} className="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 flex items-center justify-between cursor-pointer group hover:-translate-y-1 transition-all">
               <div className="flex items-center">
                 <div className="p-3 rounded-xl bg-slate-50 text-slate-400 group-hover:text-primary transition-colors"><Info size={20} /></div>
-                <span className="ml-4 text-lg font-bold text-slate-800">교회 소개</span>
+                <span className="ml-4 text-[18px] font-bold text-slate-800">교회 소개</span>
               </div>
               <ArrowRight size={16} className="text-slate-300 group-hover:text-primary" />
             </div>
@@ -70,7 +70,7 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
               <div className="flex items-center">
                 <div className="p-3 rounded-xl bg-white/20"><Calendar size={20} /></div>
                 <div className="ml-4 text-left">
-                  <span className="block text-lg font-bold">예배 안내</span>
+                  <span className="block text-[18px] font-bold">예배 안내</span>
                 </div>
               </div>
               <ArrowRight size={16} className="text-white/60" />
@@ -78,7 +78,7 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
             <div onClick={() => onNavigate(Page.Location)} className="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 flex items-center justify-between cursor-pointer group hover:-translate-y-1 transition-all">
               <div className="flex items-center">
                 <div className="p-3 rounded-xl bg-slate-50 text-slate-400 group-hover:text-blue-600 transition-colors"><MapPin size={20} /></div>
-                <span className="ml-4 text-lg font-bold text-slate-800">오시는 길</span>
+                <span className="ml-4 text-[18px] font-bold text-slate-800">오시는 길</span>
               </div>
               <ArrowRight size={16} className="text-slate-300 group-hover:text-blue-600" />
             </div>
@@ -90,7 +90,7 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
       <section className="py-12 md:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-4 mb-8">
-            <h2 className="text-2xl md:text-5xl font-black">최신 설교 영상</h2>
+            <h2 className="text-[24px] md:text-[48px] font-black">최신 설교 영상</h2>
             {topSermons.length > 1 && (
               <div className="flex space-x-2">
                 <button onClick={prevSermon} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200"><ArrowLeft size={16} /></button>
@@ -111,12 +111,12 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
                  </div>
                )}
              </div>
-             <div className="lg:w-1/3 p-8 md:p-12 text-left flex flex-col justify-center">
-               <span className="text-primary font-black text-xs md:text-sm uppercase mb-3">{currentSermon.date}</span>
-               <h3 className="text-xl md:text-2xl font-black mb-4 line-clamp-2">{currentSermon.title}</h3>
-               <p className="text-slate-600 mb-6 text-sm">{currentSermon.speaker} | {currentSermon.scripture}</p>
-               <button onClick={() => onNavigate(Page.Sermons)} className="text-primary font-black flex items-center border-b-2 border-primary/20 hover:border-primary transition-all w-fit text-sm">전체 설교 보기 <ArrowRight className="ml-2" size={14} /></button>
-             </div>
+              <div className="lg:w-1/3 p-8 md:p-12 text-left flex flex-col justify-center">
+                <span className="text-primary font-black text-[12px] md:text-[14px] uppercase mb-3">{currentSermon.date}</span>
+                <h3 className="text-[20px] md:text-[24px] font-black mb-4 line-clamp-2">{currentSermon.title}</h3>
+                <p className="text-slate-600 mb-6 text-[14px]">{currentSermon.speaker} | {currentSermon.scripture}</p>
+                <button onClick={() => onNavigate(Page.Sermons)} className="text-primary font-black flex items-center border-b-2 border-primary/20 hover:border-primary transition-all w-fit text-[14px]">전체 설교 보기 <ArrowRight className="ml-2" size={14} /></button>
+              </div>
           </div>
         </div>
       </section>
@@ -125,7 +125,7 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
       <section className="py-12 md:py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between mb-8 md:mb-12">
-            <h2 className="text-2xl md:text-4xl font-black">교회 소식</h2>
+            <h2 className="text-[24px] md:text-[36px] font-black">교회 소식</h2>
             {topNews.length > 1 && (
               <div className="flex space-x-2">
                 <button onClick={prevNews} className="p-3 bg-white rounded-full shadow-sm hover:bg-slate-50 transition-colors"><ArrowLeft size={20} /></button>
@@ -144,10 +144,10 @@ const Home: React.FC<HomeProps> = ({ churchInfo, allSermons, recentNews, onNavig
               <div className="flex-grow">
                 <div className="flex items-center mb-4">
                   {currentNews.is_pinned && <Pin size={16} className="text-primary mr-2" fill="currentColor" />}
-                  <span className="text-slate-400 font-bold text-sm uppercase tracking-wider">{currentNews.date}</span>
+                  <span className="text-slate-400 font-bold text-[14px] uppercase tracking-wider">{currentNews.date}</span>
                 </div>
-                <h3 className="text-xl md:text-3xl font-black mb-4 line-clamp-1">{currentNews.title}</h3>
-                <p className="text-slate-500 leading-relaxed line-clamp-2 md:line-clamp-3 mb-6">{currentNews.content}</p>
+                <h3 className="text-[20px] md:text-[30px] font-black mb-4 line-clamp-1">{currentNews.title}</h3>
+                <p className="text-slate-500 leading-relaxed line-clamp-2 md:line-clamp-3 mb-6 text-[16px]">{currentNews.content}</p>
                 <div className="inline-flex items-center text-primary font-black group">자세히 보기 <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} /></div>
               </div>
             </div>

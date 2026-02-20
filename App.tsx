@@ -43,20 +43,34 @@ const App: React.FC = () => {
         if (infoData && typeof infoData === 'object' && !Array.isArray(infoData)) {
           const raw = infoData as any;
           if (raw.id || raw.name) {
+            let parsedWorshipSchedule = INITIAL_CHURCH_INFO.worshipSchedule;
+            try {
+              if (typeof raw.worship_schedule === 'string') {
+                parsedWorshipSchedule = JSON.parse(raw.worship_schedule);
+              } else if (Array.isArray(raw.worship_schedule)) {
+                parsedWorshipSchedule = raw.worship_schedule;
+              } else if (Array.isArray(raw.worshipSchedule)) {
+                parsedWorshipSchedule = raw.worshipSchedule;
+              }
+            } catch (e) {
+              console.error("Worship schedule parse error:", e);
+            }
+
             setChurchInfo({
               ...INITIAL_CHURCH_INFO,
               ...raw,
-              greetingTitle: raw.greeting_title || raw.greetingTitle || INITIAL_CHURCH_INFO.greetingTitle,
+              name: raw.name || INITIAL_CHURCH_INFO.name,
+              greetingTitle: raw.greeting_title ? raw.greeting_title : "환영합니다",
               visionTitle: raw.vision_title || raw.visionTitle || INITIAL_CHURCH_INFO.visionTitle,
               pastorImage: raw.pastor_image || raw.pastorImage || INITIAL_CHURCH_INFO.pastorImage,
-              adminPassword: raw.password || INITIAL_CHURCH_INFO.adminPassword,
+              adminPassword: raw.password || raw.adminPassword || INITIAL_CHURCH_INFO.adminPassword,
               greeting: raw.greeting || INITIAL_CHURCH_INFO.greeting,
               vision: raw.vision || INITIAL_CHURCH_INFO.vision,
               aboutContent: raw.about_content || raw.aboutContent || INITIAL_CHURCH_INFO.aboutContent,
               youtubeUrl: raw.youtube_url || raw.youtubeUrl || INITIAL_CHURCH_INFO.youtubeUrl,
               instagramUrl: raw.instagram_url || raw.instagramUrl || INITIAL_CHURCH_INFO.instagramUrl,
               kakaoUrl: raw.kakao_url || raw.kakaoUrl || INITIAL_CHURCH_INFO.kakaoUrl,
-              worshipSchedule: typeof raw.worship_schedule === 'string' ? JSON.parse(raw.worship_schedule) : (Array.isArray(raw.worship_schedule) ? raw.worship_schedule : INITIAL_CHURCH_INFO.worshipSchedule)
+              worshipSchedule: parsedWorshipSchedule
             });
           }
         }

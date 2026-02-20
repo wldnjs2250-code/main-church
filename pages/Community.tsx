@@ -36,8 +36,8 @@ const Community: React.FC<CommunityProps> = ({ news }) => {
   return (
     <div className="animate-in fade-in duration-500 pb-24">
       <section className="bg-slate-900 py-16 md:py-24 text-center text-white">
-        <h2 className="text-3xl md:text-4xl font-extrabold mb-4">교제와 소식</h2>
-        <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base">산전온누리 공동체의 생생한 사역 현장과 소식을 전해드립니다.</p>
+        <h2 className="text-[28px] md:text-[40px] font-extrabold mb-4">교제와 소식</h2>
+        <p className="text-slate-400 max-w-2xl mx-auto text-[14px] md:text-[16px]">산전온누리 공동체의 생생한 사역 현장과 소식을 전해드립니다.</p>
       </section>
 
       <section className="max-w-5xl mx-auto px-4 mt-12 md:mt-16 space-y-6 md:space-y-8">
@@ -45,9 +45,9 @@ const Community: React.FC<CommunityProps> = ({ news }) => {
           <div key={item.id} className={`bg-white rounded-3xl border ${item.is_pinned ? 'border-primary/30 bg-primary/[0.02]' : 'border-slate-100'} overflow-hidden shadow-sm flex flex-col sm:flex-row hover:shadow-md transition-all`}>
             {item.image && <div className="sm:w-1/4 aspect-[16/9] sm:aspect-square overflow-hidden bg-slate-100"><img src={item.image} alt="" className="w-full h-full object-cover" /></div>}
             <div className={`p-6 md:p-8 ${item.image ? 'sm:w-3/4' : 'w-full'} flex flex-col justify-center`}>
-              <div className="flex items-center text-xs font-bold mb-3">{item.is_pinned && <span className="flex items-center text-primary mr-3 bg-primary/10 px-2 py-0.5 rounded"><Pin size={12} className="mr-1" /> 필독</span>}<span className="text-slate-400">{item.date}</span></div>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-4">{item.title}</h3>
-              <p className="text-slate-600 leading-relaxed text-sm line-clamp-3">{item.content}</p>
+              <div className="flex items-center text-[12px] font-bold mb-3">{item.is_pinned && <span className="flex items-center text-primary mr-3 bg-primary/10 px-2 py-0.5 rounded"><Pin size={12} className="mr-1" /> 필독</span>}<span className="text-slate-400">{item.date}</span></div>
+              <h3 className="text-[20px] md:text-[24px] font-bold text-slate-900 mb-4">{item.title}</h3>
+              <p className="text-slate-600 leading-relaxed text-[14px] line-clamp-3">{item.content}</p>
             </div>
           </div>
         ))}

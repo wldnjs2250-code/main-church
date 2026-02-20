@@ -42,8 +42,8 @@ const Sermons: React.FC<SermonsProps> = ({ sermons }) => {
   return (
     <div className="animate-in fade-in duration-500 pb-24">
       <section className="bg-slate-900 py-24 text-center text-white">
-        <h2 className="text-4xl font-extrabold mb-6">예배 및 설교</h2>
-        <p className="text-slate-400 max-w-2xl mx-auto">언제 어디서나 하나님의 말씀을 통해 영적인 성숙과 평안을 누리십시오.</p>
+        <h2 className="text-[32px] md:text-[40px] font-extrabold mb-6">예배 및 설교</h2>
+        <p className="text-slate-400 max-w-2xl mx-auto text-[14px] md:text-[16px]">언제 어디서나 하나님의 말씀을 통해 영적인 성숙과 평안을 누리십시오.</p>
       </section>
 
       {activeVideo && (
@@ -53,8 +53,8 @@ const Sermons: React.FC<SermonsProps> = ({ sermons }) => {
                <iframe src={getSecureVideoUrl(activeVideo.videoUrl)} className="w-full h-full" allowFullScreen></iframe>
             </div>
             <div className="flex justify-between items-center">
-              <div><h3 className="text-2xl font-bold text-slate-900 mb-2">{activeVideo.title}</h3><p className="text-slate-500">{activeVideo.date} | {activeVideo.speaker}</p></div>
-              <button onClick={() => setActiveVideo(null)} className="px-6 py-2 bg-slate-200 rounded-full text-sm font-bold">닫기</button>
+              <div><h3 className="text-[20px] md:text-[24px] font-bold text-slate-900 mb-2">{activeVideo.title}</h3><p className="text-slate-500 text-[14px]">{activeVideo.date} | {activeVideo.speaker}</p></div>
+              <button onClick={() => setActiveVideo(null)} className="px-6 py-2 bg-slate-200 rounded-full text-[14px] font-bold">닫기</button>
             </div>
           </div>
         </section>
@@ -72,7 +72,7 @@ const Sermons: React.FC<SermonsProps> = ({ sermons }) => {
           {currentSermons.map((sermon) => (
             <div key={sermon.id} className="bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all cursor-pointer flex flex-col sm:flex-row" onClick={() => {setActiveVideo(sermon); window.scrollTo({ top: 400, behavior: 'smooth' });}}>
               <div className="sm:w-2/5 aspect-video relative"><img src={sermon.thumbnail} className="w-full h-full object-cover" alt="" /><div className="absolute inset-0 bg-black/10 flex items-center justify-center"><div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg"><Play className="text-primary ml-1" size={20} fill="currentColor" /></div></div></div>
-              <div className="p-6 sm:w-3/5"><span className="text-xs font-bold text-primary mb-2 block">{sermon.date}</span><h4 className="text-lg font-bold mb-3 line-clamp-2">{sermon.title}</h4><div className="flex justify-between text-sm text-slate-500"><span>{sermon.speaker}</span><span className="italic opacity-60 text-xs">{sermon.scripture}</span></div></div>
+              <div className="p-6 sm:w-3/5"><span className="text-[12px] font-bold text-primary mb-2 block">{sermon.date}</span><h4 className="text-[18px] font-bold mb-3 line-clamp-2">{sermon.title}</h4><div className="flex justify-between text-[14px] text-slate-500"><span>{sermon.speaker}</span><span className="italic opacity-60 text-[12px]">{sermon.scripture}</span></div></div>
             </div>
           ))}
         </div>

@@ -11,8 +11,8 @@ const About: React.FC<AboutProps> = ({ churchInfo }) => {
     <div className="animate-in fade-in duration-500">
       <section className="bg-slate-900 py-24 text-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-extrabold text-white mb-6">교회 소개</h2>
-          <p className="text-slate-400 max-w-2xl mx-auto">{churchInfo.vision}</p>
+          <h2 className="text-[32px] md:text-[40px] font-extrabold text-white mb-6">교회 소개</h2>
+          <p className="text-slate-400 max-w-2xl mx-auto text-[14px] md:text-[16px]">{churchInfo.vision}</p>
         </div>
       </section>
 
@@ -26,10 +26,10 @@ const About: React.FC<AboutProps> = ({ churchInfo }) => {
                 <img src={churchInfo.pastorImage} alt="Pastor" className="w-full h-full object-cover" />
               </div>
               <div className="text-center md:text-left">
-                <h3 className="text-3xl font-black mb-2 text-slate-900">{churchInfo.greetingTitle}</h3>
-                <p className="text-primary font-black text-xl mb-8">{churchInfo.pastor}</p>
+                <h3 className="text-[24px] md:text-[30px] font-black mb-2 text-slate-900">{churchInfo.greetingTitle}</h3>
+                <p className="text-primary font-black text-[18px] md:text-[20px] mb-8">{churchInfo.pastor}</p>
                 <div className="w-16 h-1.5 bg-primary/20 rounded-full mb-8 mx-auto md:mx-0"></div>
-                <p className="text-slate-600 leading-relaxed italic text-xl whitespace-pre-line font-medium">
+                <p className="text-slate-600 leading-relaxed italic text-[18px] md:text-[20px] whitespace-pre-line font-medium">
                   "{churchInfo.greeting}"
                 </p>
               </div>
@@ -37,11 +37,11 @@ const About: React.FC<AboutProps> = ({ churchInfo }) => {
             
             <div className="space-y-12">
               <div className="p-10 bg-slate-50 rounded-[32px] border border-slate-100">
-                 <h4 className="text-2xl font-black text-slate-900 mb-6">{churchInfo.visionTitle}</h4>
-                 <p className="text-2xl font-bold text-primary leading-tight italic">"{churchInfo.vision}"</p>
+                 <h4 className="text-[20px] md:text-[24px] font-black text-slate-900 mb-6">{churchInfo.visionTitle}</h4>
+                 <p className="text-[20px] md:text-[24px] font-bold text-primary leading-tight italic">"{churchInfo.vision}"</p>
               </div>
               
-              <div className="text-slate-600 leading-loose text-lg whitespace-pre-line font-medium px-4">
+              <div className="text-slate-600 leading-loose text-[16px] md:text-[18px] whitespace-pre-line font-medium px-4">
                 {churchInfo.aboutContent}
               </div>
             </div>
